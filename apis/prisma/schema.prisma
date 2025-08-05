@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  SCREENSHOT
+  IDLE
+  ACTIVE
+  BREAK
+  MEETING
+  TASK_START
+  TASK_END
+}
+
+enum ActivityStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+
+  // Relations
+  activities  Activity[]
+  screenshots Screenshot[]
+  sessions    Session[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  startTime  DateTime  @default(now())
+  endTime    DateTime?
+  isActive   Boolean   @default(true)
+  ipAddress  String?
+  userAgent  String?
+  deviceInfo Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities  Activity[]
+  screenshots Screenshot[] // ✅ ADDED this missing reverse relation
+
+  @@map("sessions")
+}
+
+model Activity {
+  id          String         @id @default(cuid())
+  userId      String
+  sessionId   String?
+  type        ActivityType
+  status      ActivityStatus @default(PENDING)
+  description String?
+  metadata    Json?
+  timestamp   DateTime       @default(now())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("activities")
+}
+
+model Screenshot {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionId   String?
+  imagePath   String
+  imageUrl    String?
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("screenshots")
+}
+
+model SystemSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String?
+  resourceId String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}

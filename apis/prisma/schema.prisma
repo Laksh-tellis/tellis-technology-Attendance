@@ -10,6 +10,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String        @id @default(cuid())
+  name      String
+  email     String        @unique
+  password  String
+  role      Role          @default(EMPLOYEE)
+  team      Team?         @relation(fields: [teamId], references: [id])
+  status    AccountStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+
+  //relation
+  activities  Activity[]
+  screenshots Screenshot[]
+  sessions    Session[]
+  teamId      Int?
+
+  @@map("users")
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+}
+
+model Team {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  users User[]
+}
+
 enum ActivityType {
   LOGIN
   LOGOUT
@@ -26,28 +62,6 @@ enum ActivityStatus {
   PENDING
   COMPLETED
   FAILED
-}
-
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(EMPLOYEE)
-  createdAt DateTime @default(now())
-
-  // Relations
-  activities  Activity[]
-  screenshots Screenshot[]
-  sessions    Session[]
-
-  @@map("users")
-}
-
-enum Role {
-  ADMIN
-  HR
-  EMPLOYEE
 }
 
 model Session {

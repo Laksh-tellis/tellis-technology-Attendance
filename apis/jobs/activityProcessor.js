@@ -1,10 +1,6 @@
 const { prisma } = require('../utils/database');
 
-/**
- * Process and aggregate activity data
- * @param {Object} activityData - Raw activity data
- * @returns {Promise<Object>} Processed activity data
- */
+
 const processActivityData = async (activityData) => {
   try {
     const {
